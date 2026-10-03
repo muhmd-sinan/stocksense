@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+/* Light, high-contrast theme only: shop owners use phones in bright light. */
+@theme {
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Malayalam", sans-serif;
+}
+
+body {
+  background: #f8fafc;
+  color: #0f172a;
+  font-family: var(--font-sans);
+  font-size: 1.0625rem;
+}
