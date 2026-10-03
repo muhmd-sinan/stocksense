@@ -4,6 +4,8 @@ Inventory tracking for small shops in Kochi. Owners type what happened in plain 
 ("sold 2 matta rice, randu coke vittu"), check the proposed lines, confirm, and stock updates.
 Low-stock alerts use a simple sales-pace forecast, and an Insights page shows sales trends.
 
+**Live demo:** https://stocksense-zeta-seven.vercel.app (sign in with demo@stocksense.local / demo1234)
+
 | Entry review                                       | Alerts                                 | Insights                                   |
 | -------------------------------------------------- | -------------------------------------- | ------------------------------------------ |
 | ![Entry review](docs/screenshots/entry-review.png) | ![Alerts](docs/screenshots/alerts.png) | ![Insights](docs/screenshots/insights.png) |

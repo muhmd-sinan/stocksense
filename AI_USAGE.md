@@ -160,7 +160,9 @@ what changed as a result. One entry per milestone.
 - The first 37 eval cases all passed, which made them too easy to be useful, so 7 harder cases
   were added. The two misses were left as known limits instead of tuning the parser to the test set.
 - E2E signs up its own shop instead of using the demo shop, so seeded data and forecasts stay clean.
-- Deploy not done: it needs the owner's Vercel account and approval.
+- Deployed after the owner said to: GitHub repo (public, `main`), Vercel linked to it, env vars
+  copied from `.env` without printing them. Reverted a `.gitignore` edit by `vercel link` that
+  would have ignored `.env.example`.
 
 **Reviewed by the owner**
 

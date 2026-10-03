@@ -244,5 +244,14 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (see note
 - [x] README: setup, env vars, scripts, Mermaid architecture diagram, screenshots, forecast, eval, limitations
   - Screenshots via `scripts/screenshots.ts` (demo login, entry previewed but never confirmed) → `docs/screenshots/`
   - Verify: lint ✓, typecheck ✓, tests 79/79 ✓, build ✓, E2E 1/1 ✓
-- [!] Deploy to Vercel: waiting for the user's go-ahead + Vercel account (env vars: DATABASE_URL, AUTH_SECRET)
+- [x] Deploy to Vercel (user: "u do the rest", 2026-10-03): https://stocksense-zeta-seven.vercel.app
+  - Code on GitHub (public): https://github.com/muhmd-sinan/stocksense, branch `main`; CI green.
+  - Vercel project `stocksense` linked to the repo, so pushes to `main` redeploy.
+  - Env (production): DATABASE_URL, AUTH_SECRET, LLM_PROVIDER/MODEL/TIMEOUT_MS, copied from `.env`
+    over stdin, never printed. Google + LLM keys empty in `.env`, so not set.
+  - Note: `stocksense.vercel.app` is someone else's project; ours got `stocksense-zeta-seven`.
+  - Note: `vercel link` appended `.vercel` and `.env*` to `.gitignore`; the trailing `.env*` re-ignored
+    `.env.example`, so reverted (both were already covered).
+  - Smoke test on prod: `/` → 307 `/login`; demo login ✓; entry preview ✓ (not saved); items, alerts (9),
+    insights all 200; no page errors.
 - [x] Final AI_USAGE.md update
