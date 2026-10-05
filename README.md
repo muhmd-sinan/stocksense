@@ -13,7 +13,8 @@ Low-stock alerts use a simple sales-pace forecast, and an Insights page shows sa
 ## Stack
 
 Next.js 16 (App Router, server actions) · TypeScript · Tailwind v4 · Drizzle ORM on Neon Postgres ·
-Auth.js v5 (credentials + optional Google, JWT sessions) · Recharts · Vitest · Playwright
+Auth.js v5 (credentials + optional Google, JWT sessions) · Recharts · Motion · Phosphor Icons ·
+Vitest · Playwright
 
 ## Setup
 

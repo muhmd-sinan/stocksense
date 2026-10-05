@@ -1,11 +1,12 @@
 "use client";
 
+import { useReducedMotion } from "motion/react";
 import {
+  Area,
+  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
-  Line,
-  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -15,55 +16,75 @@ import { formatINR } from "@/lib/format";
 import { formatDayKey, type DayPoint } from "@/lib/insights";
 import type { CategoryPoint } from "@/lib/data/insights";
 
-const EMERALD = "#065f46";
-const AXIS = { fontSize: 12, fill: "#334155" };
+// Colours come from the theme tokens via `.chart` rules in globals.css, so both themes work.
+// Charts are hidden from screen readers; each has an equivalent data table in the page.
+
 const compactINR = (v: number) =>
   v >= 1000 ? `₹${Math.round(v / 100) / 10}k` : `₹${Math.round(v)}`;
 
-// Charts are hidden from screen readers; each has an equivalent data table in the page.
+const tooltip = {
+  contentStyle: {
+    background: "var(--surface)",
+    border: "2px solid var(--edge)",
+    borderRadius: 12,
+    color: "var(--ink)",
+    fontWeight: 700,
+  },
+  labelStyle: { color: "var(--ink-2)" },
+  itemStyle: { color: "var(--ink)" },
+};
 
 export function SalesOverTimeChart({ data }: { data: DayPoint[] }) {
+  const animate = !useReducedMotion();
   return (
-    <div aria-hidden className="h-64 w-full">
+    <div aria-hidden className="chart h-64 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
-          <CartesianGrid stroke="#e2e8f0" vertical={false} />
-          <XAxis
-            dataKey="day"
-            tickFormatter={formatDayKey}
-            tick={AXIS}
-            minTickGap={24}
-            tickLine={false}
-          />
-          <YAxis tickFormatter={compactINR} tick={AXIS} width={52} tickLine={false} />
+        <AreaChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
+          <CartesianGrid vertical={false} />
+          <XAxis dataKey="day" tickFormatter={formatDayKey} minTickGap={24} tickLine={false} />
+          <YAxis tickFormatter={compactINR} width={52} tickLine={false} axisLine={false} />
           <Tooltip
+            {...tooltip}
             labelFormatter={(d) => formatDayKey(String(d))}
             formatter={(v) => [formatINR(Number(v)), "Revenue"]}
           />
-          <Line
+          <Area
             type="monotone"
             dataKey="revenue"
-            stroke={EMERALD}
             strokeWidth={2.5}
-            dot={false}
-            isAnimationActive={false}
+            activeDot={{ r: 5, strokeWidth: 2 }}
+            isAnimationActive={animate}
+            animationDuration={700}
+            animationEasing="ease-out"
           />
-        </LineChart>
+        </AreaChart>
       </ResponsiveContainer>
     </div>
   );
 }
 
 export function SalesByCategoryChart({ data }: { data: CategoryPoint[] }) {
+  const animate = !useReducedMotion();
   return (
-    <div aria-hidden className="w-full" style={{ height: Math.max(120, data.length * 44 + 24) }}>
+    <div
+      aria-hidden
+      className="chart w-full"
+      style={{ height: Math.max(120, data.length * 48 + 24) }}
+    >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} layout="vertical" margin={{ top: 0, right: 16, bottom: 0, left: 0 }}>
-          <CartesianGrid stroke="#e2e8f0" horizontal={false} />
-          <XAxis type="number" tickFormatter={compactINR} tick={AXIS} tickLine={false} />
-          <YAxis type="category" dataKey="name" tick={AXIS} width={88} tickLine={false} />
-          <Tooltip formatter={(v) => [formatINR(Number(v)), "Revenue"]} />
-          <Bar dataKey="revenue" fill={EMERALD} radius={[0, 4, 4, 0]} isAnimationActive={false} />
+          <CartesianGrid horizontal={false} />
+          <XAxis type="number" tickFormatter={compactINR} tickLine={false} />
+          <YAxis type="category" dataKey="name" width={88} tickLine={false} axisLine={false} />
+          <Tooltip {...tooltip} formatter={(v) => [formatINR(Number(v)), "Revenue"]} />
+          <Bar
+            dataKey="revenue"
+            radius={[0, 6, 6, 0]}
+            barSize={26}
+            isAnimationActive={animate}
+            animationDuration={700}
+            animationEasing="ease-out"
+          />
         </BarChart>
       </ResponsiveContainer>
     </div>

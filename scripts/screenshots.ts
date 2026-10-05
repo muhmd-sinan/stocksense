@@ -7,7 +7,8 @@ const out = (name: string) => `docs/screenshots/${name}.png`;
 
 async function main() {
   const browser = await chromium.launch();
-  const page = await browser.newPage({ ...devices["Pixel 7"] });
+  // Reduced motion: final numbers and finished charts, nothing caught mid-animation
+  const page = await browser.newPage({ ...devices["Pixel 7"], reducedMotion: "reduce" });
 
   await page.goto(`${base}/login`);
   await page.getByLabel("Email").fill("demo@stocksense.local");
@@ -22,14 +23,17 @@ async function main() {
   await page.getByRole("heading", { name: "Check before saving" }).waitFor();
   await page.screenshot({ path: out("entry-review"), fullPage: true });
 
+  // Pages stream behind a loading skeleton, so wait for the real heading before each shot
   await page.goto(`${base}/alerts`);
+  await page.getByRole("heading", { name: /^Alerts/ }).waitFor();
   await page.screenshot({ path: out("alerts") });
 
   await page.goto(`${base}/insights`);
-  await page.locator(".recharts-line").first().waitFor();
+  await page.locator(".recharts-area").first().waitFor();
   await page.screenshot({ path: out("insights"), fullPage: true });
 
   await page.goto(`${base}/items`);
+  await page.getByRole("heading", { name: "Items" }).waitFor();
   await page.screenshot({ path: out("items") });
 
   await browser.close();

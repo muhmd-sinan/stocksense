@@ -1,4 +1,7 @@
+import { ArrowLeftIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
+import { pageTitle, textLink } from "@/components/field";
+import { Screen } from "@/components/screen";
 import { listCategories } from "@/lib/data/categories";
 import { getCurrentShopId } from "@/lib/shop";
 import { saveItemAction } from "../actions";
@@ -7,11 +10,16 @@ import { ItemForm } from "../item-form";
 export default async function NewItemPage() {
   const categories = await listCategories(await getCurrentShopId());
   return (
-    <>
-      <Link href="/items" className="font-semibold text-emerald-800 underline underline-offset-2">
-        ← Items
+    <Screen>
+      <Link
+        href="/items"
+        transitionTypes={["nav-back"]}
+        className={`${textLink} inline-flex items-center gap-1.5 self-start`}
+      >
+        <ArrowLeftIcon aria-hidden weight="bold" className="size-4" />
+        Items
       </Link>
-      <h1 className="text-2xl font-bold text-slate-950">New item</h1>
+      <h1 className={pageTitle}>New item</h1>
       <ItemForm
         action={saveItemAction.bind(null, null)}
         categories={categories}
@@ -25,6 +33,6 @@ export default async function NewItemPage() {
           lowStockThreshold: "0",
         }}
       />
-    </>
+    </Screen>
   );
 }

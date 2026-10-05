@@ -1,5 +1,8 @@
+import { ArrowLeftIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { pageTitle, textLink } from "@/components/field";
+import { Screen } from "@/components/screen";
 import { listCategories } from "@/lib/data/categories";
 import { getItem } from "@/lib/data/items";
 import { formatQty, toNum } from "@/lib/format";
@@ -15,11 +18,16 @@ export default async function EditItemPage({ params }: { params: Promise<{ id: s
   if (!item) notFound();
 
   return (
-    <>
-      <Link href="/items" className="font-semibold text-emerald-800 underline underline-offset-2">
-        ← Items
+    <Screen>
+      <Link
+        href="/items"
+        transitionTypes={["nav-back"]}
+        className={`${textLink} inline-flex items-center gap-1.5 self-start`}
+      >
+        <ArrowLeftIcon aria-hidden weight="bold" className="size-4" />
+        Items
       </Link>
-      <h1 className="text-2xl font-bold text-slate-950">Edit {item.name}</h1>
+      <h1 className={`${pageTitle} break-words`}>Edit {item.name}</h1>
       <ItemForm
         action={saveItemAction.bind(null, item.id)}
         categories={categories}
@@ -33,10 +41,10 @@ export default async function EditItemPage({ params }: { params: Promise<{ id: s
           lowStockThreshold: formatQty(item.lowStockThreshold),
         }}
       />
-      <p className="text-sm text-slate-700">
+      <p className="text-sm text-ink-2">
         Changing stock here records a correction in the item&apos;s history.
       </p>
       <DeleteItem name={item.name} action={deleteItemAction.bind(null, item.id)} />
-    </>
+    </Screen>
   );
 }

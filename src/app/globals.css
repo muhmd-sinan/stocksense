@@ -1,13 +1,387 @@
 @import "tailwindcss";
 
-/* Light, high-contrast theme only: shop owners use phones in bright light. */
-@theme {
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Malayalam", sans-serif;
+/*
+  StockSense identity: "shop signboard + cash-register keys".
+  Cool-tinted ink and paper neutrals, one signal-yellow accent used as solid blocks with ink text
+  (never yellow text on light), red only for stock danger, green only for "received / healthy".
+  Light and dark follow the phone setting. Contrast checked (OKLCH -> sRGB): body text >= 7:1,
+  secondary text >= 4.5:1, borders and focus rings >= 3:1, in both themes.
+*/
+:root {
+  color-scheme: light dark;
+
+  /* Raw-CSS easing (the @theme copies below only feed Tailwind utilities) */
+  --ease-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --paper: oklch(97.2% 0.006 250);
+  --surface: oklch(99.4% 0.003 250);
+  --sunken: oklch(94% 0.008 250);
+  --ink: oklch(21% 0.03 262);
+  --ink-2: oklch(43% 0.022 260);
+  --line: oklch(87% 0.011 255);
+  --edge: oklch(21% 0.03 262);
+  --focus: oklch(21% 0.03 262);
+
+  --accent: oklch(87% 0.175 93);
+  --on-accent: oklch(21% 0.03 262);
+  --accent-soft: oklch(95% 0.06 95);
+
+  --danger: oklch(51% 0.19 27);
+  --on-solid: oklch(99.4% 0.003 250);
+  --danger-soft: oklch(94.5% 0.025 25);
+  --ok: oklch(48% 0.11 155);
+  --ok-soft: oklch(94.5% 0.035 155);
+
+  /* Bottom bar: an ink strip in light mode, a raised surface in dark mode */
+  --bar: oklch(21% 0.03 262);
+  --on-bar: oklch(97.2% 0.006 250);
+  --on-bar-muted: oklch(80% 0.014 252);
+
+  /* Keys: the face sits on a base and presses down into it */
+  --key-edge: oklch(21% 0.03 262);
+  --key-base: oklch(21% 0.03 262);
+  --key-primary-edge: oklch(21% 0.03 262);
+  --key-primary-base: oklch(21% 0.03 262);
+  --key-danger-base: oklch(21% 0.03 262);
+
+  --chart-fill: oklch(87% 0.175 93 / 0.45);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: oklch(16.5% 0.018 262);
+    --surface: oklch(21.5% 0.02 262);
+    --sunken: oklch(13% 0.016 262);
+    --ink: oklch(95.5% 0.007 250);
+    --ink-2: oklch(76% 0.016 252);
+    --line: oklch(31% 0.022 262);
+    --edge: oklch(66% 0.018 252);
+    --focus: oklch(86% 0.165 93);
+
+    --accent: oklch(86% 0.165 93);
+    --on-accent: oklch(21% 0.03 262);
+    --accent-soft: oklch(30% 0.06 90);
+
+    --danger: oklch(71% 0.16 24);
+    --on-solid: oklch(16.5% 0.018 262);
+    --danger-soft: oklch(27% 0.07 25);
+    --ok: oklch(76% 0.13 155);
+    --ok-soft: oklch(27% 0.05 155);
+
+    --bar: oklch(21.5% 0.02 262);
+    --on-bar: oklch(95.5% 0.007 250);
+    --on-bar-muted: oklch(76% 0.016 252);
+
+    --key-edge: oklch(66% 0.018 252);
+    --key-base: oklch(9% 0.012 262);
+    --key-primary-edge: oklch(58% 0.12 78);
+    --key-primary-base: oklch(58% 0.12 78);
+    --key-danger-base: oklch(45% 0.13 25);
+
+    --chart-fill: oklch(86% 0.165 93 / 0.28);
+  }
+}
+
+@theme inline {
+  /* Only the project palette exists; stray default colours (slate-*, red-*) won't compile */
+  --color-*: initial;
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-sunken: var(--sunken);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-line: var(--line);
+  --color-edge: var(--edge);
+  --color-focus: var(--focus);
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-danger: var(--danger);
+  --color-on-solid: var(--on-solid);
+  --color-danger-soft: var(--danger-soft);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-bar: var(--bar);
+  --color-on-bar: var(--on-bar);
+  --color-on-bar-muted: var(--on-bar-muted);
+  --color-key-edge: var(--key-edge);
+  --color-key-primary-edge: var(--key-primary-edge);
+
+  --font-sans:
+    var(--font-brand), system-ui, -apple-system, "Segoe UI", "Noto Sans Malayalam", sans-serif;
+
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 body {
-  background: #f8fafc;
-  color: #0f172a;
-  font-family: var(--font-sans);
+  background: var(--paper);
+  color: var(--ink);
+  font-family:
+    var(--font-brand),
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    "Noto Sans Malayalam",
+    sans-serif;
   font-size: 1.0625rem;
+  font-kerning: normal;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Chunky signboard type for page titles and big numbers */
+@utility headline {
+  font-weight: 800;
+  font-stretch: 112%;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+}
+
+/* Small uppercase stamps: SOLD, RECEIVED, LOW */
+@utility stamp {
+  font-size: 0.75rem;
+  font-weight: 800;
+  font-stretch: 115%;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+/* ---------- Motion ---------- */
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes pop {
+  from {
+    opacity: 0.4;
+    transform: scale(0.7);
+  }
+}
+
+@keyframes shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes dot {
+  0%,
+  80%,
+  100% {
+    transform: scale(0.55);
+    opacity: 0.45;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Staggered entrance. Set style={{ "--i": index }}; the stagger caps at 10 items (~350ms). */
+@utility enter {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: rise 420ms var(--ease-expo) both;
+    animation-delay: calc(min(var(--i, 0), 10) * 35ms);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    animation: fade 200ms ease-out both;
+  }
+}
+
+/* Fades and lifts as it scrolls into view. Pure CSS: unsupported browsers just show it. */
+@utility reveal {
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      animation: rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 70%;
+    }
+  }
+}
+
+/* Count-change bump for badges; re-key the element to replay */
+@utility bump {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: pop 320ms var(--ease-expo);
+  }
+}
+
+/* Skeleton block with a sweeping highlight (transform only, static under reduced motion) */
+@utility skeleton {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  background: var(--sunken);
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in oklch, var(--surface) 70%, transparent),
+      transparent
+    );
+    transform: translateX(-100%);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    &::after {
+      animation: shimmer 1.3s var(--ease-quart) infinite;
+    }
+  }
+}
+
+/* Three-dot "working" indicator; slows to a static row under reduced motion */
+@utility dots {
+  display: inline-flex;
+  gap: 0.25rem;
+  & > span {
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 999px;
+    background: currentColor;
+    opacity: 0.6;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    & > span {
+      animation: dot 1s var(--ease-quart) infinite;
+    }
+    & > span:nth-child(2) {
+      animation-delay: 0.15s;
+    }
+    & > span:nth-child(3) {
+      animation-delay: 0.3s;
+    }
+  }
+}
+
+/* ---------- Page transitions (React <ViewTransition>, see components/screen.tsx) ---------- */
+
+@keyframes vt-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes vt-slide {
+  from {
+    translate: var(--vt-offset) 0;
+  }
+}
+
+@keyframes vt-rise {
+  from {
+    translate: 0 14px;
+  }
+}
+
+/* Clicks pass through to the live page while a transition runs */
+::view-transition {
+  pointer-events: none;
+}
+
+/* Tab to tab: old screen slides out, new one slides in from the side of the tab you tapped */
+::view-transition-old(.nav-forward),
+::view-transition-old(.nav-back) {
+  animation:
+    120ms ease-in both vt-fade reverse,
+    280ms var(--ease-quart) both vt-slide reverse;
+}
+::view-transition-new(.nav-forward),
+::view-transition-new(.nav-back) {
+  animation:
+    200ms ease-out 100ms both vt-fade,
+    320ms var(--ease-expo) both vt-slide;
+}
+::view-transition-old(.nav-forward),
+::view-transition-new(.nav-back) {
+  --vt-offset: -48px;
+}
+::view-transition-new(.nav-forward),
+::view-transition-old(.nav-back) {
+  --vt-offset: 48px;
+}
+
+/* Data arrived (Suspense reveal) or untyped navigation: content rises in */
+::view-transition-new(.page-in) {
+  animation:
+    220ms ease-out both vt-fade,
+    360ms var(--ease-expo) both vt-rise;
+}
+
+/* Header and bottom bar stay put while the screen between them moves */
+::view-transition-group(app-header),
+::view-transition-group(app-nav) {
+  animation: none;
+  z-index: 100;
+}
+::view-transition-old(app-header),
+::view-transition-old(app-nav) {
+  display: none;
+}
+::view-transition-new(app-header),
+::view-transition-new(app-nav) {
+  animation: none;
+}
+
+/* Reduced motion: keep the crossfade, drop the movement */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-name: vt-fade !important;
+    animation-duration: 150ms !important;
+    animation-delay: 0s !important;
+  }
+  ::view-transition-old(*) {
+    animation-direction: reverse !important;
+  }
+}
+
+/* ---------- Charts (Recharts) themed through the tokens ---------- */
+
+.chart .recharts-cartesian-axis-tick-value {
+  fill: var(--ink-2);
+  font-size: 12px;
+  font-weight: 600;
+}
+.chart .recharts-cartesian-grid line {
+  stroke: var(--line);
+}
+.chart .recharts-cartesian-axis-line {
+  stroke: var(--line);
+}
+.chart .recharts-area-area {
+  fill: var(--chart-fill);
+  fill-opacity: 1;
+}
+.chart .recharts-area-curve {
+  stroke: var(--ink);
+}
+.chart .recharts-bar-rectangle path {
+  fill: var(--accent);
+  stroke: var(--key-primary-edge);
+  stroke-width: 2px;
+}
+.chart .recharts-active-dot circle {
+  fill: var(--accent);
+  stroke: var(--ink);
+}
+.chart .recharts-tooltip-cursor {
+  stroke: var(--ink-2);
+  fill: var(--sunken);
 }

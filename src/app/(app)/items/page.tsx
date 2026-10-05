@@ -1,4 +1,7 @@
+import { MagnifyingGlassIcon, PackageIcon, PlusIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
+import { inputClass, key, pageTitle, stagger, tagClass, textLink } from "@/components/field";
+import { Screen } from "@/components/screen";
 import { listCategories } from "@/lib/data/categories";
 import { listItems } from "@/lib/data/items";
 import { formatINR, formatQty, toNum } from "@/lib/format";
@@ -15,62 +18,67 @@ export default async function ItemsPage({
     listCategories(shopId),
     listItems(shopId, { q, categoryId: category }),
   ]);
+  const filtered = Boolean(q || category);
 
   return (
-    <>
+    <Screen>
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-slate-950">Items</h1>
-        <Link
-          href="/items/new"
-          className="flex min-h-11 items-center rounded-lg bg-emerald-800 px-4 font-semibold text-white hover:bg-emerald-900"
-        >
-          + New item
+        <h1 className={pageTitle}>Items</h1>
+        <Link href="/items/new" transitionTypes={["nav-forward"]} className={key("primary", "sm")}>
+          <PlusIcon aria-hidden weight="bold" className="size-5" />
+          New item
         </Link>
       </div>
 
       {/* Plain GET form: works without JS, filters live in the URL */}
-      <form role="search" className="flex flex-col gap-2 sm:flex-row">
-        <label htmlFor="q" className="sr-only">
-          Search items
-        </label>
-        <input
-          id="q"
-          name="q"
-          type="search"
-          defaultValue={q}
-          placeholder="Search items"
-          className="min-h-12 flex-1 rounded-lg border-2 border-slate-400 bg-white px-3 text-lg"
-        />
-        <label htmlFor="category" className="sr-only">
-          Category
-        </label>
-        <select
-          id="category"
-          name="category"
-          defaultValue={category}
-          className="min-h-12 rounded-lg border-2 border-slate-400 bg-white px-3 text-lg"
-        >
-          <option value="">All categories</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-        <button
-          type="submit"
-          className="min-h-12 rounded-lg border-2 border-slate-800 bg-white px-4 font-semibold"
-        >
-          Filter
-        </button>
+      <form role="search" className="flex flex-col gap-3 sm:flex-row">
+        <div className="relative flex-1">
+          <label htmlFor="q" className="sr-only">
+            Search items
+          </label>
+          <MagnifyingGlassIcon
+            aria-hidden
+            weight="bold"
+            className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-ink-2"
+          />
+          <input
+            id="q"
+            name="q"
+            type="search"
+            defaultValue={q}
+            placeholder="Search items"
+            className={`${inputClass} pl-10`}
+          />
+        </div>
+        <div className="flex gap-3">
+          <label htmlFor="category" className="sr-only">
+            Category
+          </label>
+          <select
+            id="category"
+            name="category"
+            defaultValue={category}
+            className={`${inputClass} flex-1 sm:w-48`}
+          >
+            <option value="">All categories</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+          <button type="submit" className={key("secondary")}>
+            Filter
+          </button>
+        </div>
       </form>
 
-      <p className="text-sm text-slate-700" aria-live="polite">
-        {rows.length} item{rows.length === 1 ? "" : "s"}
-        {(q || category) && (
+      <p className="text-sm font-semibold text-ink-2" aria-live="polite">
+        <span className="tabular-nums">{rows.length}</span> item{rows.length === 1 ? "" : "s"}
+        {filtered && (
           <>
-            {" · "}
-            <Link href="/items" className="font-semibold text-emerald-800 underline">
+            {", "}
+            <Link href="/items" className={textLink}>
               Clear filters
             </Link>
           </>
@@ -78,33 +86,40 @@ export default async function ItemsPage({
       </p>
 
       {rows.length === 0 ? (
-        <p className="rounded-lg border-2 border-dashed border-slate-300 p-6 text-center text-slate-700">
-          No items found.
-        </p>
+        <div className="enter flex flex-col items-start gap-2 rounded-xl border-2 border-dashed border-line p-6">
+          <PackageIcon aria-hidden weight="duotone" className="size-10 text-ink-2" />
+          <p className="text-lg font-extrabold">{filtered ? "No items match." : "No items yet."}</p>
+          <p className="text-ink-2">
+            {filtered
+              ? "Try another name or category."
+              : "Add one with New item, or type “new item Maggi 70g price 14 stock 20” on Entry."}
+          </p>
+        </div>
       ) : (
-        <ul className="flex flex-col gap-3">
-          {rows.map((i) => {
+        // One ledger, rows split by rules: no card per item
+        <ul className="divide-y-2 divide-line overflow-hidden rounded-xl border-2 border-line bg-surface">
+          {rows.map((i, n) => {
             const low = toNum(i.currentStock) <= toNum(i.lowStockThreshold);
             return (
-              <li key={i.id}>
+              <li key={i.id} className="enter" style={stagger(n)}>
                 <Link
                   href={`/items/${i.id}`}
-                  className="flex items-center justify-between gap-3 rounded-lg border-2 border-slate-200 bg-white p-4 hover:border-emerald-700"
+                  transitionTypes={["nav-forward"]}
+                  className="flex items-center justify-between gap-4 px-4 py-3.5 transition-colors hover:bg-sunken focus-visible:outline-3 focus-visible:-outline-offset-3 focus-visible:outline-focus"
                 >
                   <div className="min-w-0">
-                    <p className="truncate text-lg font-semibold text-slate-950">{i.name}</p>
-                    <p className="text-sm text-slate-700">
-                      {i.categoryName} · {formatINR(i.price)}
+                    <p className="truncate text-lg font-bold">{i.name}</p>
+                    <p className="text-sm text-ink-2">
+                      {i.categoryName}, {formatINR(i.price)}
                     </p>
                   </div>
-                  <div className="shrink-0 text-right">
-                    <p className={`text-lg font-bold ${low ? "text-red-800" : "text-slate-950"}`}>
-                      {formatQty(i.currentStock)} {i.unit}
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    <p className="headline text-2xl tabular-nums">
+                      <span className={low ? "text-danger" : ""}>{formatQty(i.currentStock)}</span>{" "}
+                      <span className="text-sm font-bold tracking-normal text-ink-2">{i.unit}</span>
                     </p>
                     {low && (
-                      <p className="rounded bg-red-100 px-2 text-sm font-semibold text-red-900">
-                        Low stock
-                      </p>
+                      <span className={`${tagClass.base} ${tagClass.danger}`}>Low stock</span>
                     )}
                   </div>
                 </Link>
@@ -113,6 +128,6 @@ export default async function ItemsPage({
           })}
         </ul>
       )}
-    </>
+    </Screen>
   );
 }

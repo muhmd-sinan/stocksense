@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { Field, primaryButton } from "@/components/field";
+import { Dots, Field, FormError, primaryButton } from "@/components/field";
 import { signupAction, type FormState } from "../actions";
 
 export function SignupForm() {
@@ -9,14 +9,7 @@ export function SignupForm() {
   const fe = state.fieldErrors ?? {};
   return (
     <form action={action} className="flex flex-col gap-4" noValidate>
-      {state.error && (
-        <p
-          role="alert"
-          className="rounded-lg border-2 border-red-700 bg-red-50 p-3 font-medium text-red-900"
-        >
-          {state.error}
-        </p>
-      )}
+      <FormError message={state.error} />
       <Field
         label="Shop name"
         name="shopName"
@@ -36,7 +29,8 @@ export function SignupForm() {
         defaultValue={state.values?.email}
       />
       <Field
-        label="Password (8+ characters)"
+        label="Password"
+        hint="At least 8 characters"
         name="password"
         type="password"
         autoComplete="new-password"
@@ -44,8 +38,14 @@ export function SignupForm() {
         required
         errors={fe.password}
       />
-      <button type="submit" disabled={pending} className={primaryButton}>
-        {pending ? "Creating…" : "Create shop"}
+      <button type="submit" disabled={pending} className={`${primaryButton} mt-2`}>
+        {pending ? (
+          <>
+            Creating <Dots />
+          </>
+        ) : (
+          "Create shop"
+        )}
       </button>
     </form>
   );

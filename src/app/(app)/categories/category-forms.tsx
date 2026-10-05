@@ -1,13 +1,11 @@
 "use client";
 
+import { PencilSimpleIcon, PlusIcon, TrashIcon } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useActionState, useState, useTransition } from "react";
-import { Field, FormError } from "@/components/field";
+import { Field, FormError, key, stagger } from "@/components/field";
 import type { FormState } from "@/lib/form-state";
 import { addCategoryAction, deleteCategoryAction, renameCategoryAction } from "./actions";
-
-const smallBtn =
-  "min-h-11 rounded-lg border-2 border-slate-800 bg-white px-3 font-semibold text-slate-900 hover:bg-slate-100 disabled:opacity-60";
 
 export function AddCategory() {
   const [state, action, pending] = useActionState<FormState, FormData>(addCategoryAction, {});
@@ -15,7 +13,7 @@ export function AddCategory() {
     <form
       key={state.ok ? "reset" : JSON.stringify(state.values)}
       action={action}
-      className="flex items-end gap-2"
+      className="flex items-end gap-3"
       noValidate
     >
       <div className="flex-1">
@@ -27,11 +25,8 @@ export function AddCategory() {
           required
         />
       </div>
-      <button
-        type="submit"
-        disabled={pending}
-        className="min-h-12 rounded-lg bg-emerald-800 px-4 text-lg font-semibold text-white hover:bg-emerald-900 disabled:opacity-60"
-      >
+      <button type="submit" disabled={pending} className={key("primary")}>
+        <PlusIcon aria-hidden weight="bold" className="size-5" />
         Add
       </button>
     </form>
@@ -39,10 +34,12 @@ export function AddCategory() {
 }
 
 export function CategoryRow({
+  index,
   id,
   name,
   itemCount,
 }: {
+  index: number;
   id: string;
   name: string;
   itemCount: number;
@@ -57,7 +54,7 @@ export function CategoryRow({
   }, {});
 
   return (
-    <li className="flex flex-col gap-2 rounded-lg border-2 border-slate-200 bg-white p-4">
+    <li className="enter flex flex-col gap-2 px-4 py-3.5" style={stagger(index)}>
       {editing ? (
         <form action={action} className="flex items-end gap-2" noValidate>
           <div className="flex-1">
@@ -70,26 +67,36 @@ export function CategoryRow({
               required
             />
           </div>
-          <button type="submit" disabled={pending} className={smallBtn}>
+          <button type="submit" disabled={pending} className={key("primary", "sm")}>
             Save
           </button>
-          <button type="button" onClick={() => setEditing(false)} className={smallBtn}>
+          <button
+            type="button"
+            onClick={() => setEditing(false)}
+            className={key("secondary", "sm")}
+          >
             Cancel
           </button>
         </form>
       ) : (
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <p className="text-lg font-semibold text-slate-950">{name}</p>
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="truncate text-lg font-bold">{name}</p>
             <Link
               href={`/items?category=${id}`}
-              className="text-sm text-emerald-800 underline underline-offset-2"
+              transitionTypes={["nav-back"]}
+              className="text-sm font-semibold text-ink-2 underline decoration-2 underline-offset-4 hover:text-ink focus-visible:outline-3 focus-visible:outline-focus"
             >
               {itemCount} item{itemCount === 1 ? "" : "s"}
             </Link>
           </div>
           <div className="flex gap-2">
-            <button type="button" onClick={() => setEditing(true)} className={smallBtn}>
+            <button
+              type="button"
+              onClick={() => setEditing(true)}
+              className={key("secondary", "sm")}
+            >
+              <PencilSimpleIcon aria-hidden weight="bold" className="size-4" />
               Rename
             </button>
             <button
@@ -103,8 +110,9 @@ export function CategoryRow({
                   setDeleteError(res.error);
                 })
               }
-              className={`${smallBtn} border-red-800 text-red-900`}
+              className={`${key("secondary", "sm")} text-danger`}
             >
+              <TrashIcon aria-hidden weight="bold" className="size-4" />
               Delete
             </button>
           </div>

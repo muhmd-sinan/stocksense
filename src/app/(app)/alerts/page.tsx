@@ -1,4 +1,7 @@
+import { CheckCircleIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
+import { pageTitle, stagger, tagClass } from "@/components/field";
+import { Screen } from "@/components/screen";
 import { getLowStock, type StockStatus } from "@/lib/data/alerts";
 import { DAYS_LEFT_ALERT, WINDOW_DAYS } from "@/lib/forecast";
 import { formatQty } from "@/lib/format";
@@ -25,43 +28,67 @@ export default async function AlertsPage() {
   const low = await getLowStock(shopId);
 
   return (
-    <>
-      <h1 className="text-2xl font-bold text-slate-950">Alerts</h1>
-      <p className="text-slate-800">
-        Items at or below their alert level, or forecast to run out within {DAYS_LEFT_ALERT} days
-        (based on average daily sales over the last {WINDOW_DAYS} days).
-      </p>
+    <Screen>
+      <div className="flex flex-col gap-2">
+        <h1 className={`${pageTitle} flex items-center gap-3`}>
+          Alerts
+          {low.length > 0 && (
+            <span
+              aria-hidden
+              className="rounded-full bg-danger px-3 py-1 text-xl text-on-solid tabular-nums"
+            >
+              {low.length}
+            </span>
+          )}
+        </h1>
+        <p className="max-w-[60ch] text-ink-2">
+          Items at or below their alert level, or forecast to run out within {DAYS_LEFT_ALERT} days
+          (from average daily sales over the last {WINDOW_DAYS} days).
+        </p>
+      </div>
 
       {low.length === 0 ? (
-        <p className="rounded-lg border-2 border-dashed border-slate-300 p-6 text-center text-lg text-slate-800">
-          Nothing is running low.
-        </p>
+        <div className="enter flex flex-col items-start gap-2 rounded-xl border-2 border-ok bg-ok-soft p-6">
+          <CheckCircleIcon aria-hidden weight="fill" className="size-10 text-ok" />
+          <p className="text-lg font-extrabold">Nothing is running low.</p>
+          <p className="text-ink">Items show up here when they near their alert level.</p>
+        </div>
       ) : (
-        <ul className="flex flex-col gap-3" aria-label={`${low.length} items low on stock`}>
-          {low.map((s) => (
-            <li key={s.id}>
+        <ul
+          className="divide-y-2 divide-line overflow-hidden rounded-xl border-2 border-line bg-surface"
+          aria-label={`${low.length} items low on stock`}
+        >
+          {low.map((s, n) => (
+            <li key={s.id} className="enter" style={stagger(n)}>
               <Link
                 href={`/items/${s.id}`}
-                className="flex items-center justify-between gap-3 rounded-lg border-2 border-red-200 bg-white p-4 hover:border-red-700"
+                transitionTypes={["nav-forward"]}
+                className="flex items-center justify-between gap-4 px-4 py-3.5 transition-colors hover:bg-sunken focus-visible:outline-3 focus-visible:-outline-offset-3 focus-visible:outline-focus"
               >
                 <div className="min-w-0">
-                  <p className="truncate text-lg font-semibold text-slate-950">{s.name}</p>
-                  <p className="text-sm font-medium text-red-900">{reasonText(s)}</p>
-                  <p className="text-sm text-slate-700">
+                  <p className="truncate text-lg font-bold">{s.name}</p>
+                  <p className="text-sm font-bold text-danger">{reasonText(s)}</p>
+                  <p className="text-sm text-ink-2">
                     {daysLeftText(s)}
                     {s.forecast.dailyRate > 0 &&
-                      ` · sells ~${formatQty(Math.round(s.forecast.dailyRate * 10) / 10)}/day`}
+                      `, sells ~${formatQty(Math.round(s.forecast.dailyRate * 10) / 10)}/day`}
                   </p>
                 </div>
-                <div className="shrink-0 text-right">
-                  <p className="text-lg font-bold text-red-800">{formatQty(s.stock)}</p>
-                  <p className="text-sm text-slate-700">{s.unit} left</p>
+                <div className="flex shrink-0 flex-col items-end gap-1">
+                  {s.stock <= 0 ? (
+                    <span className={`${tagClass.base} ${tagClass.danger} text-sm`}>Out</span>
+                  ) : (
+                    <p className="headline text-3xl text-danger tabular-nums">
+                      {formatQty(s.stock)}
+                    </p>
+                  )}
+                  <p className="text-sm font-semibold text-ink-2">{s.unit} left</p>
                 </div>
               </Link>
             </li>
           ))}
         </ul>
       )}
-    </>
+    </Screen>
   );
 }

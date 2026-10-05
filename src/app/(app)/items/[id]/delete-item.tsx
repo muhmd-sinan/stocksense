@@ -1,7 +1,8 @@
 "use client";
 
+import { TrashIcon } from "@phosphor-icons/react";
 import { useState, useTransition } from "react";
-import { FormError } from "@/components/field";
+import { Dots, FormError, dangerButton, key, secondaryButton } from "@/components/field";
 import type { FormState } from "@/lib/form-state";
 
 export function DeleteItem({ name, action }: { name: string; action: () => Promise<FormState> }) {
@@ -14,8 +15,9 @@ export function DeleteItem({ name, action }: { name: string; action: () => Promi
       <button
         type="button"
         onClick={() => setConfirming(true)}
-        className="min-h-12 rounded-lg border-2 border-red-800 px-4 text-lg font-semibold text-red-900 hover:bg-red-50"
+        className={`${key("secondary")} self-start text-danger`}
       >
+        <TrashIcon aria-hidden weight="bold" className="size-5" />
         Delete item
       </button>
     );
@@ -24,9 +26,9 @@ export function DeleteItem({ name, action }: { name: string; action: () => Promi
     <div
       role="alertdialog"
       aria-labelledby="del-title"
-      className="flex flex-col gap-3 rounded-lg border-2 border-red-800 bg-red-50 p-4"
+      className="enter flex flex-col gap-4 rounded-xl border-2 border-danger bg-danger-soft p-4"
     >
-      <p id="del-title" className="font-semibold text-red-950">
+      <p id="del-title" className="font-bold text-ink">
         Delete {name}? It will be hidden from your lists. Past sales stay in your reports.
       </p>
       <FormError message={error} />
@@ -35,7 +37,7 @@ export function DeleteItem({ name, action }: { name: string; action: () => Promi
           type="button"
           autoFocus
           onClick={() => setConfirming(false)}
-          className="min-h-12 rounded-lg border-2 border-slate-800 bg-white font-semibold text-slate-900"
+          className={secondaryButton}
         >
           Keep it
         </button>
@@ -48,9 +50,15 @@ export function DeleteItem({ name, action }: { name: string; action: () => Promi
               if (res?.error) setError(res.error);
             })
           }
-          className="min-h-12 rounded-lg bg-red-800 font-semibold text-white hover:bg-red-900 disabled:opacity-60"
+          className={dangerButton}
         >
-          {pending ? "Deleting…" : "Yes, delete"}
+          {pending ? (
+            <>
+              Deleting <Dots />
+            </>
+          ) : (
+            "Yes, delete"
+          )}
         </button>
       </div>
     </div>
