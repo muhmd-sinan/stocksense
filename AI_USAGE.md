@@ -278,6 +278,7 @@ what changed as a result. One entry per milestone.
   while the database is in Singapore, so each of a page's 3-6 sequential queries crossed the globe.
 - Fixes: `vercel.json` pins functions to `sin1`; nav links fully prefetch, so taps render from the
   client cache; screen transitions shortened. Local prod build: ~850ms → ~90ms per switch.
+- Production after deploy: 85-94ms per switch (medians), down from 0.86-2.4s.
 - The E2E test now opens Items from the nav after saving, so it checks prefetched screens refresh.
 
 **Agent decisions and self-corrections**

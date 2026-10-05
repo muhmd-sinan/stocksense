@@ -421,9 +421,18 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (see note
     checks a prefetched screen shows the new stock. Passes on dev and on the prod build.
   - Considered, not done: Cache Components / Partial Prefetching (a migration across every
     route, more than this needs); `staleTimes.dynamic` (prefetch already covers the nav).
-- [ ] Re-measure on production
+- [x] Re-measure on production (same script and device, 3 rounds, after the M11 deploy)
+  - Items 87ms, Alerts 94ms, Insights 85ms, Categories 91ms, Entry 90ms (medians; was
+    864-2394ms). Worst single tap 223ms (first Insights). Sold / Bought tabs 45-53ms.
+  - Sign in → Entry took 6.0s on the first request after the deploy (cold start); not tuned.
 - [x] AI_USAGE entry
 
 ## Milestone 11 — Ship M8-M10
 
-- [ ] Commit, push branch, PR, CI, merge to `main`, Vercel production deploy, smoke test
+- [x] Commit, push branch, PR, CI, merge to `main`, Vercel production deploy, smoke test
+  - Branch `entry-tabs-responsive-speed`, commit 5f377ae, PR #2. Vercel preview ✓, CI ✓.
+    Merged to `main` as 70e04af; production served from `sin1` (`x-vercel-id: bom1::sin1::…`).
+  - Smoke test (demo shop, read-only): 390px light, 1280px light, 1440px dark. All five screens
+    and both Entry tabs render, no page errors, no sideways scroll, login tagline gone. Bottom bar
+    on the phone, sidebar on desktop, one "Main" nav in the accessibility tree at each width.
+  - Follow-up docs PR for these notes.
