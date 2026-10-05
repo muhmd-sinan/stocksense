@@ -436,3 +436,22 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (see note
     and both Entry tabs render, no page errors, no sideways scroll, login tagline gone. Bottom bar
     on the phone, sidebar on desktop, one "Main" nav in the accessibility tree at each width.
   - Follow-up docs PR for these notes.
+
+## Milestone 12 — Login / signup signboard
+
+- [x] Fix the empty signboard (user, 2026-10-05: "lots free space right?" on the desktop login)
+  - Cause: removing the tagline left a 28rem-tall yellow panel holding only the icon (top) and
+    a 48px wordmark (bottom); the panel's min-height, not its content, set its size.
+  - Plan: the wordmark becomes the sign. Desktop: "Stock / Sense" stacked, sized to the panel's
+    width (container units), panel sized by content instead of a fixed min-height, form column
+    narrowed to a fixed width. Phone: icon and wordmark on one row, so the form sits higher.
+  - [x] Implement, check 320-1920px + landscape, light and dark, login and signup
+    - Desktop: panel 496x386 (was 456x448, nearly all empty), "Stock / Sense" at 115px fills it, 22px spare for
+      the fallback font. Signup's taller form stretches the panel to 461px; wordmark stays at
+      the bottom.
+    - Phone: one row, panel 92px tall (was ~153px), so the form starts ~61px higher.
+      Wordmark 26px at 320px, 35px at 390px (was 32-35px).
+    - No sideways scroll at any width; no page errors.
+  - [x] Lint, typecheck, tests (108/108), E2E (signup + login pass through these pages)
+  - [x] AI_USAGE entry
+  - [x] User: "push and deploy" (2026-10-05). Branch `auth-signboard`, PR, CI, merge, deploy.
