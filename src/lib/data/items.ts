@@ -1,8 +1,8 @@
-import { and, asc, eq, ilike, isNull } from "drizzle-orm";
+import { and, asc, eq, ilike, isNull, max } from "drizzle-orm";
 import { db, type Tx } from "@/db";
 import { categories, items, transactions } from "@/db/schema";
 import { round3, toNum } from "@/lib/format";
-import type { ItemOption } from "@/lib/parser/draft";
+import type { EntryItem } from "@/lib/entry-rows";
 import { uuidSchema, type ItemInput } from "@/lib/validation";
 import { DataError, isUniqueViolation } from "./errors";
 
@@ -36,16 +36,26 @@ export function listItems(shopId: string, filter: { q?: string; categoryId?: str
 }
 export type ItemRow = Awaited<ReturnType<typeof listItems>>[number];
 
-/** Live items as plain numbers, for the entry card */
-export async function listItemOptions(shopId: string): Promise<ItemOption[]> {
-  const rows = await listItems(shopId);
+/** Live items as plain numbers, for the Entry page's Sold and Bought tabs */
+export async function listEntryItems(shopId: string): Promise<EntryItem[]> {
+  const [rows, bought] = await Promise.all([
+    listItems(shopId),
+    // Latest restock per item, so Bought can suggest what was bought recently
+    db
+      .select({ itemId: transactions.itemId, at: max(transactions.createdAt) })
+      .from(transactions)
+      .where(and(eq(transactions.shopId, shopId), eq(transactions.type, "restock")))
+      .groupBy(transactions.itemId),
+  ]);
+  const lastBought = new Map(bought.map((b) => [b.itemId, b.at ? new Date(b.at).getTime() : null]));
   return rows.map((r) => ({
     id: r.id,
     name: r.name,
     unit: r.unit,
     price: toNum(r.price),
     stock: toNum(r.currentStock),
-    threshold: toNum(r.lowStockThreshold),
+    categoryId: r.categoryId,
+    lastBought: lastBought.get(r.id) ?? null,
   }));
 }
 

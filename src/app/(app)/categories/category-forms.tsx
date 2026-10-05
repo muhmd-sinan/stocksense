@@ -79,13 +79,14 @@ export function CategoryRow({
           </button>
         </form>
       ) : (
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="truncate text-lg font-bold">{name}</p>
+        // The buttons drop under the name when the row gets too narrow for both
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+          <div className="min-w-[10rem] flex-1">
+            <p className="text-lg leading-snug font-bold break-words">{name}</p>
             <Link
               href={`/items?category=${id}`}
               transitionTypes={["nav-back"]}
-              className="text-sm font-semibold text-ink-2 underline decoration-2 underline-offset-4 hover:text-ink focus-visible:outline-3 focus-visible:outline-focus"
+              className="-my-3 inline-flex min-h-11 min-w-11 items-center text-sm font-semibold text-ink-2 underline decoration-2 underline-offset-4 hover:text-ink focus-visible:outline-3 focus-visible:outline-focus"
             >
               {itemCount} item{itemCount === 1 ? "" : "s"}
             </Link>

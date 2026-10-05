@@ -4,7 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { db } from "@/db";
 import { transactions, users } from "@/db/schema";
 import { listCategories } from "@/lib/data/categories";
-import { applyEntries } from "@/lib/data/entries";
+import { applyEntries, listRecentEntries } from "@/lib/data/entries";
 import { createItem, getItem } from "@/lib/data/items";
 import { createShopForUser } from "@/lib/onboarding";
 
@@ -141,5 +141,25 @@ run("applyEntries (integration)", () => {
         "x",
       ),
     ).rejects.toThrow(/already have/);
+  });
+
+  it("a restock with a new price updates the item's price", async () => {
+    const [line] = await applyEntries(
+      shopA,
+      [{ type: "restock", itemId: rice, quantity: 2, price: 55 }],
+      "Bought on Entry page",
+    );
+    expect(line).toMatchObject({ stockBefore: 8, stockAfter: 10, price: 55 });
+    expect((await getItem(shopA, rice))!.price).toBe("55.00");
+  });
+
+  it("lists recent sales and purchases for the shop only, newest first", async () => {
+    const recent = await listRecentEntries(shopA, 50);
+    expect(recent.length).toBeGreaterThan(0);
+    expect(recent.every((r) => r.type === "sale" || r.type === "restock")).toBe(true);
+    const times = recent.map((r) => r.createdAt.getTime());
+    expect(times).toEqual([...times].sort((a, b) => b - a));
+    expect(recent.find((r) => r.type === "sale" && r.name === "Entry Rice")?.amount).toBe(100);
+    expect(await listRecentEntries(shopB)).toEqual([]);
   });
 });

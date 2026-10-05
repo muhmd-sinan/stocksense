@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
-// The core loop: sign in → type a sale → confirm → stock goes down.
-test("typed sale updates stock after confirmation", async ({ page }) => {
+// The core loop: sign in → sell on the Sold tab → buy on the Bought tab → stock follows.
+test("sold and bought tabs update stock", async ({ page }) => {
   const email = `e2e-${Date.now()}@stocksense.test`;
   const password = "e2e-pass-1234";
 
@@ -32,18 +32,50 @@ test("typed sale updates stock after confirmation", async ({ page }) => {
   await page.getByRole("button", { name: "Add item" }).click();
   await expect(page).toHaveURL(/\/items$/);
 
-  // Type a sale; nothing is saved until Confirm
+  // Sold: product + quantity, stock preview, then save
   await page.goto("/");
-  await page.getByLabel("What did you sell or receive?").fill("sold 3 sugar");
-  await page.getByRole("button", { name: "Read entry" }).click();
-  await expect(page.getByRole("heading", { name: "Check before saving" })).toBeVisible();
-  await expect(page.getByText("Stock 10 → 7")).toBeVisible();
-  await page.getByRole("button", { name: "Confirm 1 line" }).click();
+  const sold = page.getByRole("tabpanel", { name: "Sold" });
+  await sold.getByLabel("Product").selectOption({ label: "Sugar 1kg (10 pack)" });
+  await sold.getByLabel("Quantity").fill("3");
+  await expect(sold.getByText("Stock 10 → 7 pack")).toBeVisible();
+  await sold.getByRole("button", { name: "Save sale" }).click();
+  await expect(sold.getByRole("status")).toContainText(
+    "Sold 3 pack Sugar 1kg for ₹138.00. 7 left.",
+  );
 
-  const saved = page.getByRole("status").filter({ hasText: "Saved" });
-  await expect(saved).toContainText("Sold 3 pack Sugar 1kg. 7 left.");
+  // Bought: a known name restocks it, a new name creates an item
+  await page.getByRole("tab", { name: "Bought" }).click();
+  const bought = page.getByRole("tabpanel", { name: "Bought" });
+  const lines = bought.getByRole("list", { name: "Bought lines" }).getByRole("listitem");
+  // Typing part of a name suggests the item; picking it fills name, category and price
+  await lines.nth(0).getByLabel("Name").fill("sug");
+  await lines.nth(0).getByRole("option", { name: /^Sugar 1kg/ }).click();
+  await expect(lines.nth(0).getByLabel("Name")).toHaveValue("Sugar 1kg");
+  await expect(lines.nth(0).getByRole("listbox")).toBeHidden();
+  await expect(lines.nth(0).getByLabel("Price (₹)")).toHaveValue("46");
+  await lines.nth(0).getByLabel("Quantity").fill("5");
+  await expect(lines.nth(0).getByText("Stock 7 → 12 pack")).toBeVisible();
 
-  // And the items list agrees
-  await page.goto("/items");
-  await expect(page.getByRole("link", { name: /Sugar 1kg/ })).toContainText("7 pack");
+  await bought.getByRole("button", { name: "Add row" }).click();
+  await lines.nth(1).getByLabel("Name").fill("Maggi 70g");
+  await lines.nth(1).getByLabel("Category").selectOption({ index: 1 });
+  await lines.nth(1).getByLabel("Price (₹)").fill("14");
+  await lines.nth(1).getByLabel("Quantity").fill("20");
+  await expect(lines.nth(1).getByText("New item")).toBeVisible();
+  await bought.getByRole("button", { name: "Save 2 purchases" }).click();
+
+  const saved = bought.getByRole("status");
+  await expect(saved).toContainText("Bought 5 pack Sugar 1kg. Now 12.");
+  await expect(saved).toContainText("Added Maggi 70g: 20 pcs at ₹14.00 each.");
+
+  // Dates are stored automatically and shown on the Recent list
+  const recent = page.getByRole("region", { name: "Recent" });
+  await expect(recent).toContainText("Maggi 70g");
+  await expect(recent).toContainText("Today,");
+
+  // And the items list agrees. Tapped from the nav (not page.goto), so in a production build
+  // this reads the prefetched page: saving must have refreshed it.
+  await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Items" }).click();
+  await expect(page.getByRole("link", { name: /Sugar 1kg/ })).toContainText("12 pack");
+  await expect(page.getByRole("link", { name: /Maggi 70g/ })).toContainText("20 pcs");
 });

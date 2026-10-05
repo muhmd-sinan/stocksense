@@ -7,7 +7,7 @@ import { AddCategory, CategoryRow } from "./category-forms";
 export default async function CategoriesPage() {
   const cats = await listCategoriesWithCounts(await getCurrentShopId());
   return (
-    <Screen>
+    <Screen className="max-w-3xl">
       <h1 className={pageTitle}>Categories</h1>
       <AddCategory />
       <ul className="divide-y-2 divide-line overflow-hidden rounded-xl border-2 border-line bg-surface">
