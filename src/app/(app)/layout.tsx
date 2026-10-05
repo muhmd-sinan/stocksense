@@ -1,3 +1,5 @@
+import { SignOutIcon, StorefrontIcon } from "@phosphor-icons/react/ssr";
+import { key } from "@/components/field";
 import { getLowStock } from "@/lib/data/alerts";
 import { getCurrentShop } from "@/lib/shop";
 import { signOutAction } from "../(auth)/actions";
@@ -8,20 +10,29 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const low = await getLowStock(shop.id);
   return (
     <>
-      <header className="sticky top-0 z-10 border-b-2 border-slate-200 bg-white">
+      <header
+        style={{ viewTransitionName: "app-header" }}
+        className="sticky top-0 z-20 border-b-2 border-line bg-paper"
+      >
         <div className="mx-auto flex w-full max-w-2xl items-center justify-between gap-3 px-4 py-2">
-          <p className="truncate text-lg font-bold text-emerald-900">{shop.name}</p>
-          <form action={signOutAction}>
-            <button
-              type="submit"
-              className="min-h-11 rounded-lg px-3 font-semibold text-slate-800 underline underline-offset-2 hover:bg-slate-100"
+          <p className="flex min-w-0 items-center gap-2.5">
+            <span
+              aria-hidden
+              className="grid size-9 shrink-0 place-items-center rounded-xl border-2 border-key-primary-edge bg-accent text-on-accent"
             >
+              <StorefrontIcon weight="fill" className="size-5" />
+            </span>
+            <span className="truncate text-lg font-extrabold">{shop.name}</span>
+          </p>
+          <form action={signOutAction}>
+            <button type="submit" className={key("secondary", "sm")}>
+              <SignOutIcon aria-hidden weight="bold" className="size-5" />
               Sign out
             </button>
           </form>
         </div>
       </header>
-      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 pt-5 pb-28">
+      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 pt-5 pb-32">
         {children}
       </main>
       <BottomNav alertCount={low.length} />

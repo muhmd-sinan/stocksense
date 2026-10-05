@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { Field, FormError, SelectField, primaryButton } from "@/components/field";
+import { Dots, Field, FormError, SelectField, primaryButton } from "@/components/field";
 import type { FormState } from "@/lib/form-state";
 
 type Values = {
@@ -42,7 +42,8 @@ export function ItemForm({
         required
       />
       <Field
-        label="Unit (what you count in: pack, bag, bottle, kg…)"
+        label="Unit"
+        hint="What you count in: pack, bag, bottle, kg"
         name="unit"
         defaultValue={v.unit}
         errors={fe.unit}
@@ -74,8 +75,14 @@ export function ItemForm({
         errors={fe.lowStockThreshold}
         required
       />
-      <button type="submit" disabled={pending} className={primaryButton}>
-        {pending ? "Saving…" : submitLabel}
+      <button type="submit" disabled={pending} className={`${primaryButton} mt-2`}>
+        {pending ? (
+          <>
+            Saving <Dots />
+          </>
+        ) : (
+          submitLabel
+        )}
       </button>
     </form>
   );

@@ -255,3 +255,49 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (see note
   - Smoke test on prod: `/` → 307 `/login`; demo login ✓; entry preview ✓ (not saved); items, alerts (9),
     insights all 200; no page errors.
 - [x] Final AI_USAGE.md update
+
+## Milestone 7 — UI/UX redesign (new visual identity)
+
+- [x] Plan (user, 2026-10-05: new visual identity, "bold and punchy", light + dark following the
+      phone, expressive motion; use the sites in uihelper.md, /impeccable-uxui and /taste-skill)
+  - Direction: "shop signboard + cash-register keys". Cool-tinted ink + paper neutrals, one
+    signal-yellow accent used as solid blocks with ink text (never yellow text on light), red only
+    for stock danger. Chunky variable grotesk for headings and big numbers, tabular figures.
+  - Signature interaction: primary buttons sit on a darker base and press down into it on tap.
+  - Supersedes the M1 decisions "light theme only" and "system fonts only".
+  - Kept stable: routes, nav labels, form labels, headings and button names (E2E + screenshot
+    script select by them).
+- [x] Research uihelper sites (Motion, view transitions, loaders, button effects, icons, fonts)
+  - Used: Motion, React ViewTransition (Next guide), CodeFronts press/swap ideas, Colorion/CodeFronts
+    loader patterns, Magic UI number-ticker approach, Phosphor icons.
+  - Skipped: Lenis and GSAP (smooth scroll fights the fixed bottom bar and the on-screen keyboard;
+    nothing here needs pinned scroll), AnimateIcons (a second icon family), 3D/WebGL.
+  - uiverse.io returned 403; Ripplix/Norrly galleries weren't readable as text.
+- [x] Tokens in globals.css: OKLCH colours (light/dark via prefers-color-scheme), type, radii, motion
+  - `--color-*: initial` so only project tokens compile; stray `slate-*` classes fail loudly.
+  - Contrast computed (OKLCH -> sRGB): body >= 11:1, secondary >= 6.7:1, edges/focus >= 5.6:1 in both themes.
+- [x] Font via next/font: Archivo (variable weight + width), tabular numbers on all figures
+- [x] Install pinned: motion 14.0.0, @phosphor-icons/react 2.1.10 (`optimizePackageImports` for Phosphor)
+- [x] Shared UI: key buttons, fields (+ hints), tags, dots loader, skeletons, number ticker, toast
+- [x] App shell: top bar, bottom nav with icons, gliding indicator, badge pop, pending tap state
+  - Fix: Alerts tab's accessible name read the badge first ("1 items low on stock Alerts");
+    now "Alerts, 1 item low on stock".
+- [x] Page transitions (React ViewTransition, `components/screen.tsx`) + loading.tsx per route
+  - Tabs slide by direction (nav-forward/nav-back); header and bar are named so they stay put.
+- [x] Entry: example chips, reading skeleton, review slips (stagger in, collapse on remove),
+      stock bump, Saved stamp, toast slides up; focus moves to each step's heading
+- [x] Items list (ledger rows), item form, delete confirm
+- [x] Alerts
+- [x] Insights: yellow "Today" block with count-up, area + bar charts themed via CSS, scroll reveals
+- [x] Categories, auth pages (signboard header), error, (app)/not-found
+- [x] Reduced motion: MotionConfig reducedMotion="user", CSS guards, view transitions fade only
+- [x] Verify: lint ✓, typecheck ✓, tests 79/79 ✓, build ✓, E2E 1/1 ✓
+  - Playwright (Pixel 7) light, dark, reduced motion: all screens, remove line, Edit, Cancel keeps
+    text + focus, save stamp, toast + dismiss, 3 tab taps run view transitions. No page errors.
+    Throwaway `e2e-*` shops deleted afterwards; demo shop never confirmed.
+  - Dev only: Next's dev badge sits over the Entry tab (not in production builds).
+- [x] README screenshots + AI_USAGE entry
+  - Fix: screenshot script now waits for real headings (pages stream behind skeletons) and uses
+    reduced motion so charts and numbers are captured finished.
+- [x] Pause for review → user: "all done? then push to github and deploy it" (2026-10-05)
+- [ ] Deploy: branch + PR, merge to `main` after CI, Vercel redeploys, smoke-test production
