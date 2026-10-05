@@ -7,6 +7,9 @@ import { listItems } from "@/lib/data/items";
 import { formatINR, formatQty, toNum } from "@/lib/format";
 import { getCurrentShopId } from "@/lib/shop";
 
+/** Column widths shared by the ledger's header and its rows once it's wide enough */
+const WIDE_COLS = "@min-[44rem]:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_8rem_10rem]";
+
 export default async function ItemsPage({
   searchParams,
 }: {
@@ -92,41 +95,64 @@ export default async function ItemsPage({
           <p className="text-ink-2">
             {filtered
               ? "Try another name or category."
-              : "Add one with New item, or type “new item Maggi 70g price 14 stock 20” on Entry."}
+              : "Add one with New item, or enter a purchase on Entry → Bought."}
           </p>
         </div>
       ) : (
-        // One ledger, rows split by rules: no card per item
-        <ul className="divide-y-2 divide-line overflow-hidden rounded-xl border-2 border-line bg-surface">
-          {rows.map((i, n) => {
-            const low = toNum(i.currentStock) <= toNum(i.lowStockThreshold);
-            return (
-              <li key={i.id} className="enter" style={stagger(n)}>
-                <Link
-                  href={`/items/${i.id}`}
-                  transitionTypes={["nav-forward"]}
-                  className="flex items-center justify-between gap-4 px-4 py-3.5 transition-colors hover:bg-sunken focus-visible:outline-3 focus-visible:-outline-offset-3 focus-visible:outline-focus"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-lg font-bold">{i.name}</p>
-                    <p className="text-sm text-ink-2">
-                      {i.categoryName}, {formatINR(i.price)}
+        // One ledger, rows split by rules: no card per item. Narrow: name over "category, price",
+        // stock on the right. Wide (by the ledger's own width): one table row per item.
+        <div className="@container overflow-hidden rounded-xl border-2 border-line bg-surface">
+          <div
+            aria-hidden
+            className={`stamp hidden border-b-2 border-line px-4 py-3 text-ink-2 @min-[44rem]:grid ${WIDE_COLS}`}
+          >
+            <span>Item</span>
+            <span>Category</span>
+            <span className="text-right">Price</span>
+            <span className="text-right">Stock</span>
+          </div>
+          <ul className="divide-y-2 divide-line">
+            {rows.map((i, n) => {
+              const low = toNum(i.currentStock) <= toNum(i.lowStockThreshold);
+              return (
+                <li key={i.id} className="enter" style={stagger(n)}>
+                  <Link
+                    href={`/items/${i.id}`}
+                    transitionTypes={["nav-forward"]}
+                    className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-0.5 px-4 py-3.5 transition-colors [grid-template-areas:'name_stock'_'meta_stock'] hover:bg-sunken focus-visible:outline-3 focus-visible:-outline-offset-3 focus-visible:outline-focus @min-[44rem]:[grid-template-areas:'name_cat_price_stock'] ${WIDE_COLS}`}
+                  >
+                    <p className="text-lg leading-snug font-bold break-words [grid-area:name]">
+                      {i.name}
                     </p>
-                  </div>
-                  <div className="flex shrink-0 flex-col items-end gap-1">
-                    <p className="headline text-2xl tabular-nums">
-                      <span className={low ? "text-danger" : ""}>{formatQty(i.currentStock)}</span>{" "}
-                      <span className="text-sm font-bold tracking-normal text-ink-2">{i.unit}</span>
+                    {/* contents on wide screens, so category and price become their own cells */}
+                    <p className="self-start text-sm text-ink-2 [grid-area:meta] @min-[44rem]:contents">
+                      <span className="break-words @min-[44rem]:text-base @min-[44rem]:font-semibold @min-[44rem]:[grid-area:cat]">
+                        {i.categoryName}
+                      </span>
+                      <span className="@min-[44rem]:hidden">, </span>
+                      <span className="tabular-nums @min-[44rem]:text-right @min-[44rem]:text-base @min-[44rem]:font-semibold @min-[44rem]:text-ink @min-[44rem]:[grid-area:price]">
+                        {formatINR(i.price)}
+                      </span>
                     </p>
-                    {low && (
-                      <span className={`${tagClass.base} ${tagClass.danger}`}>Low stock</span>
-                    )}
-                  </div>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+                    <div className="flex flex-col items-end gap-1 [grid-area:stock]">
+                      <p className="headline text-2xl whitespace-nowrap tabular-nums">
+                        <span className={low ? "text-danger" : ""}>
+                          {formatQty(i.currentStock)}
+                        </span>{" "}
+                        <span className="text-sm font-bold tracking-normal text-ink-2">
+                          {i.unit}
+                        </span>
+                      </p>
+                      {low && (
+                        <span className={`${tagClass.base} ${tagClass.danger}`}>Low stock</span>
+                      )}
+                    </div>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       )}
     </Screen>
   );

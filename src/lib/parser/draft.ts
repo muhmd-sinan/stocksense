@@ -1,5 +1,6 @@
-// Drafts are the editable, not-yet-saved lines shown on the confirmation card.
-// Pure and client-safe: the entry form uses these helpers live, the server re-checks on save.
+// Drafts are the editable, not-yet-saved lines a parsed text entry turns into.
+// Since milestone 8 the Entry page uses form rows (lib/entry-rows.ts) instead; drafts are kept
+// for the parser eval and tests. EntryInput below is what applyEntries saves, for both.
 
 import { round3 } from "@/lib/format";
 
@@ -110,7 +111,8 @@ export function checkDrafts(drafts: Draft[], items: ItemOption[]): LineCheck[] {
 
 export type EntryInput =
   | { type: "sale"; itemId: string; quantity: number; allowOversell: boolean }
-  | { type: "restock"; itemId: string; quantity: number }
+  // price: the Bought tab sends the item's (possibly new) selling price
+  | { type: "restock"; itemId: string; quantity: number; price?: number }
   | { type: "update_threshold"; itemId: string; threshold: number }
   | {
       type: "create_item";

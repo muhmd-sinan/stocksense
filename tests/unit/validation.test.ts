@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatINR, formatQty } from "@/lib/format";
+import { formatDay, formatINR, formatQty, formatWhen } from "@/lib/format";
 import { categorySchema, itemSchema } from "@/lib/validation";
 
 const base = {
@@ -49,5 +49,19 @@ describe("format", () => {
   });
   it("formats rupees", () => {
     expect(formatINR("1250.00")).toMatch(/₹\s?1,250/);
+  });
+});
+
+describe("dates in IST", () => {
+  const now = new Date("2026-10-05T09:00:00Z"); // 2:30 pm IST
+  it("labels today and yesterday by the IST calendar day", () => {
+    expect(formatWhen(new Date("2026-10-05T09:00:00Z"), now)).toMatch(/^Today, 2:30\spm$/);
+    // 11:59 pm vs 12:01 am IST on either side of midnight
+    expect(formatWhen(new Date("2026-10-04T18:29:00Z"), now)).toMatch(/^Yesterday, 11:59\spm$/);
+    expect(formatWhen(new Date("2026-10-04T18:31:00Z"), now)).toMatch(/^Today, 12:01\sam$/);
+  });
+  it("uses a short date for older entries", () => {
+    expect(formatWhen(new Date("2026-10-03T12:00:00Z"), now)).toMatch(/^3 Oct, 5:30\spm$/);
+    expect(formatDay(now)).toBe("Mon, 5 Oct");
   });
 });

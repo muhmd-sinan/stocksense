@@ -1,4 +1,4 @@
-import { and, eq, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "@/db";
 import { items, transactions } from "@/db/schema";
 import { formatQty, round3, toNum } from "@/lib/format";
@@ -15,6 +15,7 @@ export type AppliedLine = {
   stockBefore: number;
   stockAfter: number;
   threshold: number;
+  price: number; // per unit, after this line
 };
 
 /**
@@ -62,6 +63,7 @@ export async function applyEntries(
             stockBefore: 0,
             stockAfter: qty,
             threshold: 0,
+            price: e.price,
           });
           continue;
         }
@@ -72,7 +74,10 @@ export async function applyEntries(
           .where(and(eq(items.id, e.itemId), eq(items.shopId, shopId), isNull(items.deletedAt)))
           .for("update");
         if (!item)
-          throw new DataError(null, "One of the items no longer exists. Read the entry again.");
+          throw new DataError(
+            null,
+            "One of the items no longer exists. Refresh the page and try again.",
+          );
         const before = toNum(item.currentStock);
         const threshold = toNum(item.lowStockThreshold);
         const base = { itemId: item.id, name: item.name, unit: item.unit, stockBefore: before };
@@ -83,7 +88,14 @@ export async function applyEntries(
             .update(items)
             .set({ lowStockThreshold: String(t), updatedAt: new Date() })
             .where(eq(items.id, item.id));
-          out.push({ ...base, type: e.type, quantity: t, stockAfter: before, threshold: t });
+          out.push({
+            ...base,
+            type: e.type,
+            quantity: t,
+            stockAfter: before,
+            threshold: t,
+            price: toNum(item.price),
+          });
           continue;
         }
 
@@ -100,6 +112,12 @@ export async function applyEntries(
             quantity: String(qty),
             rawText: note,
           });
+          // The Bought tab carries the selling price: a changed price updates the item
+          if (e.price != null && e.price !== toNum(item.price))
+            await tx
+              .update(items)
+              .set({ price: String(e.price), updatedAt: new Date() })
+              .where(eq(items.id, item.id));
         } else {
           if (qty > before) {
             if (!e.allowOversell)
@@ -130,7 +148,8 @@ export async function applyEntries(
           .update(items)
           .set({ currentStock: String(after), updatedAt: new Date() })
           .where(eq(items.id, item.id));
-        out.push({ ...base, type: e.type, quantity: qty, stockAfter: after, threshold });
+        const price = e.type === "restock" && e.price != null ? e.price : toNum(item.price);
+        out.push({ ...base, type: e.type, quantity: qty, stockAfter: after, threshold, price });
       }
       return out;
     });
@@ -140,3 +159,40 @@ export async function applyEntries(
     throw e;
   }
 }
+
+/** Latest sales and purchases for the Entry page. Deleted items still show: the entry happened. */
+export async function listRecentEntries(shopId: string, limit = 8) {
+  const rows = await db
+    .select({
+      id: transactions.id,
+      type: transactions.type,
+      quantity: transactions.quantity,
+      unitPrice: transactions.unitPrice,
+      createdAt: transactions.createdAt,
+      name: items.name,
+      unit: items.unit,
+    })
+    .from(transactions)
+    .innerJoin(items, eq(items.id, transactions.itemId))
+    .where(
+      and(
+        eq(transactions.shopId, shopId),
+        eq(items.shopId, shopId),
+        inArray(transactions.type, ["sale", "restock"]),
+      ),
+    )
+    // Lines saved together share a timestamp; name keeps their order stable
+    .orderBy(desc(transactions.createdAt), asc(items.name))
+    .limit(limit);
+  return rows.map((r) => ({
+    id: r.id,
+    type: r.type as "sale" | "restock",
+    name: r.name,
+    unit: r.unit,
+    quantity: toNum(r.quantity),
+    amount:
+      r.type === "sale" ? Math.round(toNum(r.quantity) * toNum(r.unitPrice) * 100) / 100 : null,
+    createdAt: r.createdAt,
+  }));
+}
+export type RecentEntry = Awaited<ReturnType<typeof listRecentEntries>>[number];

@@ -300,4 +300,130 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (see note
   - Fix: screenshot script now waits for real headings (pages stream behind skeletons) and uses
     reduced motion so charts and numbers are captured finished.
 - [x] Pause for review → user: "all done? then push to github and deploy it" (2026-10-05)
-- [ ] Deploy: branch + PR, merge to `main` after CI, Vercel redeploys, smoke-test production
+- [x] Deploy: branch + PR, merge to `main` after CI, Vercel redeploys, smoke-test production
+  - PR #1 (CI ✓, Vercel preview ✓) merged as `bab58ae`; production deploy succeeded.
+  - Production smoke test (read-only, demo login, entry previewed not confirmed), light + dark:
+    Archivo loads, themed background, all 5 screens render, 5 nav icons, no page errors.
+
+## Milestone 8 — Entry page rebuilt as Sold / Bought tabs
+
+- [x] Plan (user, 2026-10-05: "straight forward like a tab for sold and bought"; Bought = table of
+      name, category, price, quantity; Sold = category, product, quantity; date stored
+      automatically; "keep it similar to other pages")
+  - Bought: a name that matches an existing item (case-insensitive, exact) restocks it; a new name
+    creates the item (unit "pcs", alert level 0, both editable on the item page). Price is the
+    selling price; a changed price on a restock updates the item.
+  - Sold: category filters the product list; shows stock before → after; oversell needs a tick.
+  - Date: the transaction's `created_at`, shown in IST on a "Recent" list under the form.
+  - Text parser is no longer used on Entry. `lib/parser` stays (eval script + tests); the
+    `parseEntryAction` endpoint is removed so it isn't a dead public server action.
+- [x] Pure row helpers + unit tests (`lib/entry-rows.ts`, `tests/unit/entry-rows.test.ts`)
+  - Two lines for one item add up; a leftover oversell tick is ignored once the line fits.
+- [x] Data: restock can carry a price; recent entries query; IST date formatting
+  - `listItemOptions` → `listEntryItems` (adds categoryId). `formatWhen`: Today / Yesterday / 3 Oct.
+- [x] Server action: save sold / bought rows (re-validated, shop-scoped, one DB transaction)
+  - `saveSoldAction` / `saveBoughtAction`, one schema each, so a tab can't send the other's lines.
+  - Removed `parseEntryAction` and the combined `entriesSchema` (no callers left).
+- [x] UI: tabs, Sold rows, Bought rows, saved banner, low-stock toast, Recent list, skeleton
+  - Files: `entry-form.tsx` (tabs), `sold-panel.tsx`, `bought-panel.tsx`, `entry-parts.tsx`.
+  - Phone: lines stack; md+: one row per line like a table. Locked category on a restock.
+- [x] Update E2E, screenshot script, README, Items empty-state copy
+  - README screenshot renamed `entry-review.png` → `entry.png`.
+- [x] Verify: lint ✓, typecheck ✓, tests 100/100 ✓ (incl. DB integration), build ✓, E2E 1/1 ✓
+  - Playwright (Pixel 7 + 1280px, light + dark): no page overflow, no wrapped buttons, remove
+    button level with inputs, tab indicator on the selected tab, focus goes to the new line /
+    first error. Demo shop only filled in, never saved; E2E used a throwaway `e2e-*` shop.
+  - Fix: long prices overflowed the desktop Price box; columns rebalanced (no overflow at
+    ₹99999.5 / qty 1234.5).
+  - `prettier --write` had rewritten line endings on 31 untouched files; restored them.
+- [x] AI_USAGE entry
+- [x] Pause for review → user: "make it so that it recommends the item if it were already typed
+      once earlier" (2026-10-05)
+- [x] Bought: suggest existing items while typing a name
+  - Custom suggestion list under Name (ARIA combobox), replacing the `<datalist>`: Android Chrome
+    shows datalists unreliably and they can't show stock/price or rank by recency.
+  - Ranking: name starts with the text → a word starts with it → contains it → fuzzy (typos and
+    local names via the parser's `scoreName`). Ties: most recently bought first.
+  - Tapping an empty Name box lists recently bought items. Picking one fills name, category and
+    price; a price auto-filled from an earlier pick is replaced, a typed price is kept.
+  - Keyboard: ↓/↑ move, Enter picks, Esc closes. Max 5 suggestions.
+  - Files: `name-combobox.tsx`; `suggestItems` / `withName` in `lib/entry-rows.ts`;
+    `listEntryItems` adds each item's latest restock time (`lastBought`).
+- [x] Unit tests (ranking, autofill), E2E step, verify
+  - Unit 90/90 ✓, typecheck ✓, lint ✓, E2E 1/1 ✓ (types "sug", picks "Sugar 1kg").
+  - Playwright on the demo shop (Pixel 7 + 1280px, light + dark, read-only): tap on an empty
+    box lists recently bought; "ri" → Matta Rice, Ponni Rice; ↓ + Enter picks and fills the
+    price, focus stays in the box; Esc closes; touch tap picks; Add row doesn't pop the list
+    open; options ≥ 61px tall; no page overflow or errors.
+- [x] Pause for review → user asked for the responsive pass next (M9)
+
+## Milestone 9 — Responsive pass, every page
+
+- [x] Plan (user, 2026-10-05: "make the whole website every page every element responsive to
+      various screen sizes"; later: "use sidebar if needed for pc version rather than bottom bar.
+      in phone bottom bar is fine")
+  - Audit every page at 320, 360, 390, 768, 1024, 1280, 1440px (Playwright): page overflow,
+    clipped/overflowing text, wrapped buttons, small tap targets, content under the nav bar.
+  - Use the width on bigger screens instead of a phone column in the middle (nav, page layouts).
+  - Baseline (prod build on :3101; the dev server's `/items/[id]` worker was stuck): no page
+    overflows at any width. Found: auth headline spills at 320px; nav badge spills; header shop
+    name truncated (111px at 320px); item names truncated in Items, Insights, Alerts, Recent;
+    category names squeezed to 15px by Rename/Delete at 320px; "N items" links 46×15px; Items
+    back link under 44px; every page is a 672px column with a phone bottom bar, even at 1920px.
+- [x] Fix and re-audit
+  - Shell: below lg, sticky header + bottom bar (Sign out is icon-only under sm, the shop name
+    wraps to 2 lines). From lg, a sticky left sidebar (15rem) with brand, shop, nav (the yellow
+    key slides vertically, alert count as a pill) and Sign out; content gets the rest, up to
+    72rem. Landscape phones (`short` variant: height < 30rem, below lg): header scrolls away,
+    slimmer bar with icon beside label.
+  - `bottom-nav.tsx` → `main-nav.tsx` with `variant="bar" | "side"`. The layout renders both;
+    CSS hides one, so only one "Main" nav is ever in the accessibility tree.
+  - Entry: line grids switch on the panel's width (`@container`) instead of the viewport (Sold
+    at 36rem, Bought at 40rem); from 88rem the form and Recent sit side by side.
+  - Items: names wrap; from a 44rem-wide list each row is a table row (item, category, price,
+    stock) under a header row. Alerts: names wrap; days left gets its own column.
+  - Insights: filters beside the title from xl; Today's three numbers in one row from lg;
+    charts left, lists right from xl. Names in Top 5 / Running low wrap.
+  - Categories: Rename/Delete drop under the name when the row is narrow; "N items" links 44px.
+  - Forms (item new/edit) cap at 36rem, Categories at 48rem (`Screen className`). Back links 44px.
+  - Auth: signboard | form side by side from lg; tagline removed (user asked).
+  - Low-stock toast: above the bar on phones, bottom-right corner with the sidebar.
+  - Skeletons follow the new layouts.
+  - Re-audit (prod build, 320-1920px + 844×390 landscape): no page overflow, no clipped or
+    truncated text, no wrapped buttons, nothing under the bar. Left on purpose: the nav badge
+    overhangs its icon (by design), Insights "Low stock" link is a stretched link (whole cell).
+  - Fix found by the re-audit: auth "StockSense" was too wide for the half-width signboard at lg.
+- [x] Verify: lint ✓, typecheck ✓, tests 108/108 ✓, build ✓, E2E 1/1 ✓ (dev and prod build)
+- [x] README screenshots regenerated (Pixel 7)
+- [x] AI_USAGE entry
+- [x] No pause: user chained "responsive → optimize → commit, push, deploy" (2026-10-05)
+
+## Milestone 10 — Faster page and tab switches
+
+- [x] Measure (user, 2026-10-05: "switching pages and tabs feels too slow")
+  - Production (demo shop, Pixel-sized Chromium from Kochi, tap → real heading shown):
+    Items 864ms, Categories 866ms, Entry 1356ms, Alerts 1370ms, Insights 2394ms (medians of 3).
+  - Cause 1: functions run in `iad1` (Washington) but Neon is in `ap-southeast-1` (Singapore),
+    so every DB round trip crosses the globe (~220ms), and a page makes 3-6 of them in sequence
+    (session → shop → queries).
+  - Cause 2: nav links only prefetched down to `loading.tsx` (dynamic routes), so every tap
+    waited on a full server render; dynamic pages aren't kept in the client cache either.
+  - Sold / Bought tabs: 42-46ms locally (client state only), not a problem.
+- [x] Fixes
+  - `vercel.json` `regions: ["sin1"]`: functions run next to the database.
+  - Nav links `prefetch` (full): all five screens load in the background, so a tap renders from
+    the client cache. Saves call `revalidatePath("/", "layout")`, which purges that cache, and
+    Next re-prefetches visible links after an invalidation (`pingVisibleLinks`), so prefetched
+    screens don't go stale after your own saves. Cost: ~5 small renders per page load.
+  - Shorter screen transitions (slide 280/320ms → 200/240ms, 32px instead of 48px).
+  - Local prod build: page switches 836-890ms → 76-223ms (medians 82-129ms).
+  - E2E now opens Items from the nav after saving (not `page.goto`), so in a production build it
+    checks a prefetched screen shows the new stock. Passes on dev and on the prod build.
+  - Considered, not done: Cache Components / Partial Prefetching (a migration across every
+    route, more than this needs); `staleTimes.dynamic` (prefetch already covers the nav).
+- [ ] Re-measure on production
+- [x] AI_USAGE entry
+
+## Milestone 11 — Ship M8-M10
+
+- [ ] Commit, push branch, PR, CI, merge to `main`, Vercel production deploy, smoke test

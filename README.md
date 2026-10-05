@@ -1,14 +1,15 @@
 # StockSense
 
-Inventory tracking for small shops in Kochi. Owners type what happened in plain text
-("sold 2 matta rice, randu coke vittu"), check the proposed lines, confirm, and stock updates.
-Low-stock alerts use a simple sales-pace forecast, and an Insights page shows sales trends.
+Inventory tracking for small shops in Kochi. The Entry page has two tabs: **Sold** (category →
+product → quantity) and **Bought** (name, category, price, quantity). Stock updates on Save, and the
+date and time are stored automatically. Low-stock alerts use a simple sales-pace forecast, and an
+Insights page shows sales trends.
 
 **Live demo:** https://stocksense-zeta-seven.vercel.app (sign in with demo@stocksense.local / demo1234)
 
-| Entry review                                       | Alerts                                 | Insights                                   |
-| -------------------------------------------------- | -------------------------------------- | ------------------------------------------ |
-| ![Entry review](docs/screenshots/entry-review.png) | ![Alerts](docs/screenshots/alerts.png) | ![Insights](docs/screenshots/insights.png) |
+| Entry                                | Alerts                                 | Insights                                   |
+| ------------------------------------ | -------------------------------------- | ------------------------------------------ |
+| ![Entry](docs/screenshots/entry.png) | ![Alerts](docs/screenshots/alerts.png) | ![Insights](docs/screenshots/insights.png) |
 
 ## Stack
 
@@ -35,7 +36,7 @@ npm run dev
 | `DATABASE_URL`                        | yes      | Neon Postgres connection string (pooled)                       |
 | `AUTH_SECRET`                         | yes      | Signs session JWTs                                             |
 | `AUTH_GOOGLE_ID`/`AUTH_GOOGLE_SECRET` | no       | Enables "Continue with Google"                                 |
-| `LLM_API_KEY`                         | no       | Enables the LLM parser. Without it the rules parser is used    |
+| `LLM_API_KEY`                         | no       | LLM parser for `eval:parser` (not used by the app since M8)    |
 | `LLM_PROVIDER`/`LLM_MODEL`            | no       | Default `groq` / `llama-3.3-70b-versatile` (OpenAI-compatible) |
 | `LLM_BASE_URL`/`LLM_TIMEOUT_MS`       | no       | Custom endpoint; timeout (default 10000)                       |
 
@@ -46,7 +47,7 @@ npm run dev
 | `dev` / `build` / `start`                | Next.js                                                                |
 | `lint` / `typecheck` / `format`          | ESLint, `tsc --noEmit`, Prettier                                       |
 | `test`                                   | Vitest unit tests; DB integration tests run when `DATABASE_URL` is set |
-| `test:e2e`                               | Playwright: signup → login → typed sale → confirm → stock updated      |
+| `test:e2e`                               | Playwright: signup → login → Sold tab → Bought tab → stock updated     |
 | `eval:parser`                            | Scores the parser on 44 sample entries                                 |
 | `db:generate` / `db:migrate` / `db:seed` | Drizzle migrations and the demo shop                                   |
 
@@ -54,16 +55,13 @@ npm run dev
 
 ```mermaid
 flowchart LR
-  U[Owner's phone] -->|text| EA[Entry server action]
-  EA --> P{LLM key set?}
-  P -->|yes| LLM[LLM parser<br/>JSON mode, timeout]
-  P -->|no / fails| R[Rules parser]
-  LLM --> Z[Zod-validated actions]
-  R --> Z
-  Z --> M[Fuzzy match against<br/>shop's items]
-  M --> D[Draft cards + questions]
-  D -->|owner confirms| A[applyEntries<br/>one DB transaction,<br/>row locks]
+  U[Owner's phone] --> T{Entry tab}
+  T -->|Sold: product + qty| C[Live line checks<br/>stock before → after]
+  T -->|Bought: name, category,<br/>price, qty| C
+  C -->|Save| SA[Server action<br/>Zod re-validation]
+  SA --> A[applyEntries<br/>one DB transaction,<br/>row locks]
   A --> DB[(Neon Postgres)]
+  DB --> R[Recent list<br/>dates in IST]
   DB --> F[Forecast + alerts]
   DB --> I[Insights queries]
 ```
@@ -71,10 +69,10 @@ flowchart LR
 - **Shop scoping.** Every query takes the shop id from the session (`getCurrentShopId()` in
   `src/lib/shop.ts`), never from the client. Ids sent by the client (item, category) are re-checked
   against the shop. `src/lib/data/*` holds all DB access.
-- **Parser never writes.** Text becomes proposed actions, matched to items. Anything unsure (unknown
-  or ambiguous name, missing quantity) turns into a question on the card. Only Confirm saves.
-- **Prompt injection.** The owner's text goes to the LLM inside `<entry>` tags with tag characters
-  stripped, the system prompt treats it as data, and the reply must pass a Zod schema.
+- **Entry.** Lines are checked live in the browser (`src/lib/entry-rows.ts`) and again on the server
+  (`soldEntriesSchema` / `boughtEntriesSchema`), so each tab can only send its own kind of line. On
+  Bought, a name that exactly matches an existing item (ignoring case) restocks it and a changed price
+  updates it; a new name creates the item, counted in pcs. The date is the row's `created_at`.
 - **Ledger.** Stock changes and their transaction rows are written in one DB transaction. A CHECK
   constraint keeps stock from going negative. Overselling needs an explicit override, recorded as an
   adjustment plus the sale.
@@ -94,6 +92,11 @@ flowchart LR
 
 ## Parser eval
 
+Until milestone 8 the Entry page read typed notes ("sold 2 matta rice, randu coke vittu") with a
+rules or LLM parser. It now uses the Sold / Bought forms instead. The parser (`src/lib/parser`) is
+kept with its eval and tests but isn't called by the app. The owner's text goes to the LLM inside
+`<entry>` tags with tag characters stripped, and the reply must pass a Zod schema.
+
 `npm run eval:parser` runs 44 entries (plain English, typos, Manglish, several items, missing
 quantities, ambiguous names, pack sizes, alert levels, new items) through parse and match, and counts
 an entry right only if every line matches. Ambiguous names must produce a question, not a guess.
@@ -104,9 +107,11 @@ a 90% floor in CI. The LLM parser is scored too when `LLM_API_KEY` is set.
 
 ## Known limitations
 
-- The LLM parser hasn't been scored yet: the eval and browser checks ran on the rules parser only.
-- The rules parser knows a fixed list of verbs and Manglish words. Unknown local names (e.g. "chaya
-  podi") need the LLM or an edit on the card.
+- Bought's price is the selling price. There's no cost price, so no margins.
+- Items added on Bought start in pcs with alert level 0. Change both on the item page.
+- Bought matches names exactly: "Sugar 1 kg" and "Sugar 1kg" are different items. The name box
+  suggests existing names to help avoid this.
+- The LLM parser hasn't been scored yet, and the parser isn't used by the app since milestone 8.
 - The forecast was tuned on simulated, fairly steady demand. Festival seasons and weekly patterns
   aren't modelled. Revisit with real shop data.
 - One shop per owner, no staff accounts or roles.

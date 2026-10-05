@@ -18,11 +18,11 @@ export default async function EditItemPage({ params }: { params: Promise<{ id: s
   if (!item) notFound();
 
   return (
-    <Screen>
+    <Screen className="max-w-xl">
       <Link
         href="/items"
         transitionTypes={["nav-back"]}
-        className={`${textLink} inline-flex items-center gap-1.5 self-start`}
+        className={`${textLink} -my-2 inline-flex min-h-11 items-center gap-1.5 self-start`}
       >
         <ArrowLeftIcon aria-hidden weight="bold" className="size-4" />
         Items

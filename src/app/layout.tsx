@@ -28,7 +28,10 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${archivo.variable} h-full scroll-pt-20 scroll-pb-28 antialiased`}>
+    <html
+      lang="en"
+      className={`${archivo.variable} h-full scroll-pt-20 scroll-pb-28 antialiased short:scroll-pt-4 short:scroll-pb-20 lg:scroll-pt-6 lg:scroll-pb-6`}
+    >
       <body className="flex min-h-full flex-col">
         <MotionProvider>{children}</MotionProvider>
       </body>

@@ -54,8 +54,10 @@ export default async function AlertsPage() {
           <p className="text-ink">Items show up here when they near their alert level.</p>
         </div>
       ) : (
+        // Narrow: name, reason, days left stacked beside the stock. Wide (by the list's own
+        // width): days left gets its own column.
         <ul
-          className="divide-y-2 divide-line overflow-hidden rounded-xl border-2 border-line bg-surface"
+          className="@container divide-y-2 divide-line overflow-hidden rounded-xl border-2 border-line bg-surface"
           aria-label={`${low.length} items low on stock`}
         >
           {low.map((s, n) => (
@@ -63,18 +65,18 @@ export default async function AlertsPage() {
               <Link
                 href={`/items/${s.id}`}
                 transitionTypes={["nav-forward"]}
-                className="flex items-center justify-between gap-4 px-4 py-3.5 transition-colors hover:bg-sunken focus-visible:outline-3 focus-visible:-outline-offset-3 focus-visible:outline-focus"
+                className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 px-4 py-3.5 transition-colors [grid-template-areas:'name_stock'_'days_stock'] hover:bg-sunken focus-visible:outline-3 focus-visible:-outline-offset-3 focus-visible:outline-focus @min-[44rem]:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_7rem] @min-[44rem]:[grid-template-areas:'name_days_stock']"
               >
-                <div className="min-w-0">
-                  <p className="truncate text-lg font-bold">{s.name}</p>
+                <div className="[grid-area:name]">
+                  <p className="text-lg leading-snug font-bold break-words">{s.name}</p>
                   <p className="text-sm font-bold text-danger">{reasonText(s)}</p>
-                  <p className="text-sm text-ink-2">
-                    {daysLeftText(s)}
-                    {s.forecast.dailyRate > 0 &&
-                      `, sells ~${formatQty(Math.round(s.forecast.dailyRate * 10) / 10)}/day`}
-                  </p>
                 </div>
-                <div className="flex shrink-0 flex-col items-end gap-1">
+                <p className="self-start text-sm text-ink-2 [grid-area:days] @min-[44rem]:self-center @min-[44rem]:text-base @min-[44rem]:font-semibold">
+                  {daysLeftText(s)}
+                  {s.forecast.dailyRate > 0 &&
+                    `, sells ~${formatQty(Math.round(s.forecast.dailyRate * 10) / 10)}/day`}
+                </p>
+                <div className="flex flex-col items-end gap-1 [grid-area:stock]">
                   {s.stock <= 0 ? (
                     <span className={`${tagClass.base} ${tagClass.danger} text-sm`}>Out</span>
                   ) : (

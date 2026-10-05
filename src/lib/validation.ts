@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MAX_PRICE, MAX_QTY, MAX_ROWS } from "@/lib/entry-rows";
 
 /** Form number field: empty → "required" error instead of silently becoming 0 */
 function amount(label: string, max: number) {
@@ -30,32 +31,36 @@ export const categorySchema = z.object({
 
 export const uuidSchema = z.uuid();
 
-// What the entry card sends on Confirm. Re-validated on the server; ids re-checked against the shop.
-const qty = z.number().positive("Quantity must be more than 0").max(999_999);
-export const entriesSchema = z
+// What the Entry page's Sold and Bought tabs send on Save. Re-validated on the server; ids are
+// re-checked against the session's shop when applied.
+const qty = z.number().positive("Quantity must be more than 0").max(MAX_QTY);
+const price = z.number().min(0).max(MAX_PRICE);
+
+export const soldEntriesSchema = z
+  .array(
+    z.object({
+      type: z.literal("sale"),
+      itemId: z.uuid(),
+      quantity: qty,
+      allowOversell: z.boolean(),
+    }),
+  )
+  .min(1)
+  .max(MAX_ROWS);
+
+export const boughtEntriesSchema = z
   .array(
     z.discriminatedUnion("type", [
-      z.object({
-        type: z.literal("sale"),
-        itemId: z.uuid(),
-        quantity: qty,
-        allowOversell: z.boolean(),
-      }),
-      z.object({ type: z.literal("restock"), itemId: z.uuid(), quantity: qty }),
-      z.object({
-        type: z.literal("update_threshold"),
-        itemId: z.uuid(),
-        threshold: z.number().min(0).max(999_999_999),
-      }),
+      z.object({ type: z.literal("restock"), itemId: z.uuid(), quantity: qty, price }),
       z.object({
         type: z.literal("create_item"),
         name: z.string().trim().min(1).max(80),
         unit: z.string().trim().min(1).max(20),
-        price: z.number().min(0).max(9_999_999),
-        quantity: z.number().min(0).max(999_999_999),
+        price,
+        quantity: qty,
         categoryId: z.uuid(),
       }),
     ]),
   )
   .min(1)
-  .max(20);
+  .max(MAX_ROWS);

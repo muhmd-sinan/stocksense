@@ -130,6 +130,9 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Landscape phones: short screens below the sidebar breakpoint get a slimmer bar, no sticky header */
+@custom-variant short (@media (height < 30rem) and (width < 64rem));
+
 /* Chunky signboard type for page titles and big numbers */
 @utility headline {
   font-weight: 800;
@@ -295,47 +298,51 @@ body {
   pointer-events: none;
 }
 
-/* Tab to tab: old screen slides out, new one slides in from the side of the tab you tapped */
+/* Tab to tab: old screen slides out, new one slides in from the side of the tab you tapped.
+   Kept short (new screen readable in ~200ms) so taps feel immediate. */
 ::view-transition-old(.nav-forward),
 ::view-transition-old(.nav-back) {
   animation:
-    120ms ease-in both vt-fade reverse,
-    280ms var(--ease-quart) both vt-slide reverse;
+    90ms ease-in both vt-fade reverse,
+    200ms var(--ease-quart) both vt-slide reverse;
 }
 ::view-transition-new(.nav-forward),
 ::view-transition-new(.nav-back) {
   animation:
-    200ms ease-out 100ms both vt-fade,
-    320ms var(--ease-expo) both vt-slide;
+    160ms ease-out 40ms both vt-fade,
+    240ms var(--ease-expo) both vt-slide;
 }
 ::view-transition-old(.nav-forward),
 ::view-transition-new(.nav-back) {
-  --vt-offset: -48px;
+  --vt-offset: -32px;
 }
 ::view-transition-new(.nav-forward),
 ::view-transition-old(.nav-back) {
-  --vt-offset: 48px;
+  --vt-offset: 32px;
 }
 
 /* Data arrived (Suspense reveal) or untyped navigation: content rises in */
 ::view-transition-new(.page-in) {
   animation:
-    220ms ease-out both vt-fade,
-    360ms var(--ease-expo) both vt-rise;
+    180ms ease-out both vt-fade,
+    280ms var(--ease-expo) both vt-rise;
 }
 
-/* Header and bottom bar stay put while the screen between them moves */
+/* Header, bottom bar and sidebar stay put while the screen between them moves */
 ::view-transition-group(app-header),
-::view-transition-group(app-nav) {
+::view-transition-group(app-nav),
+::view-transition-group(app-side) {
   animation: none;
   z-index: 100;
 }
 ::view-transition-old(app-header),
-::view-transition-old(app-nav) {
+::view-transition-old(app-nav),
+::view-transition-old(app-side) {
   display: none;
 }
 ::view-transition-new(app-header),
-::view-transition-new(app-nav) {
+::view-transition-new(app-nav),
+::view-transition-new(app-side) {
   animation: none;
 }
 
