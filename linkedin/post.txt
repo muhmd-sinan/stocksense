@@ -1,0 +1,22 @@
+I'm a data scientist, and I usually stop at the notebook. This time I shipped the whole thing.
+
+StockSense is an inventory tracker for small kirana shops in Kochi. The owner logs what was sold or bought from their phone, stock updates instantly, and the app warns them before something runs out.
+
+The data science side:
+
+📈 Stock-out forecasting. Sales are bucketed per IST calendar day over the last 14 complete days, turned into a units/day rate, and stock ÷ rate gives "days left". An item is flagged when it hits its alert level or is forecast to run out within 3 days. Items with under 3 days of history are labelled "rough guess" instead of pretending to be precise.
+
+🧪 Backtested, not guessed. I compared a plain 14-day mean with EWMA (α = 0.3) on 9,222 simulated cases, scored against the next 7 days of actual sales. The plain mean won, with an MAE of 0.64 vs 0.80 units/day, so it's the default. Caveat: the simulated demand is fairly steady, which favours the mean. Festival seasons and weekly patterns aren't modelled yet.
+
+🎲 Synthetic history. 60 days of Poisson demand with weekend uplift, random spike days and reorder-point restocking, plus edge cases built in: a brand-new item, slow movers, items quietly draining.
+
+📊 Insights dashboard. Revenue trend, revenue by category, top 5 sellers this week and a running-low list, filterable by 7/30/90 days and category. Every chart has a matching data table for screen readers.
+
+The vibe coding side: I built it with Claude Code as my pair programmer, milestone by milestone, reviewing as I went. My job was product calls and taste. The look is a shop signboard: signal-yellow blocks, chunky type, buttons that press down like cash-register keys, and a dark mode that follows the phone. One fix I'm happy with: moving the server next to the database and prefetching screens took page switches from 0.9–2.4 s down to about 90 ms.
+
+Stack: Next.js · TypeScript · Postgres (Neon) · Drizzle · Recharts · Playwright · Vercel
+
+Live demo (login is in the README): https://stocksense-zeta-seven.vercel.app
+Code: https://github.com/muhmd-sinan/stocksense
+
+#DataScience #Forecasting #VibeCoding #NextJS #BuildInPublic
